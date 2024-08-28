@@ -1,0 +1,18 @@
+{
+  "translations": [
+    {
+      "mainFilePath": "./dummy-project/locale/it.json",
+      "outputFolderPath": "./dummy-project/locale",
+      "outputFiles": [
+        {
+          "language": "en_GB",
+          "outputFileName": "en.json"
+        },
+        {
+          "language": "es_ES",
+          "outputFileName": "es.json"
+        }
+      ]
+    }
+  ]
+}
