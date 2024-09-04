@@ -6,7 +6,7 @@ import fs from "fs";
 import { Command } from "commander";
 import { HeyTranslateConfig, Translation } from "./types/config.type";
 import diffObjects from "./helpers/diffObjects.helper";
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import recomposeObjects from "./helpers/recomposeObjects.helper";
 import { TranslationToCache } from "./types/translationToCache.type";
 import { greenLog } from "./helpers/log.helpers";
@@ -30,7 +30,7 @@ program
 program
   .command("build-cache")
   .description(
-    "Build cache on JSON files based on what's written in \"heytranslate.config.json\" file. It's useful to run this command if you already have some translations in place and you want to translate only what's changing on main file from now on.\nDiscover mode on heytranslate.dev"
+    "Build cache on JSON files based on what's written in \"heytranslate.config.json\" file. It's useful to run this command if you already have some translations in place and you want to translate only what's changing on main file from now on.\nDiscover more on docs.heytranslate.dev"
   )
   .action(buildCache);
 
@@ -98,14 +98,25 @@ async function translateFromConfig() {
   try {
     translationApiResponse = await axios.post<Record<string, unknown>[]>(
       "http://localhost:3000/api/translate",
-      translationsToSend
+      translationsToSend,
+      {
+        params: {
+          api_key: process.env.HEYT_API_KEY,
+        },
+      }
     );
-  } catch {
-    const err = new Error(
-      `ERROR: Something gone wrong during the translation of your file, retry!`
-    );
-    err.stack = "";
-    throw err;
+  } catch (e: unknown) {
+    const axiosError = e as AxiosError<{ message: string }>;
+
+    if (axiosError?.response?.data?.message) {
+      program.error(
+        `\x1b[31mERROR: ${axiosError?.response?.data?.message}\x1b[0m`
+      );
+    } else {
+      program.error(
+        `\x1b[31mERROR: Something gone wrong during the translation\x1b[0m`
+      );
+    }
   }
 
   console.log("🔄 Translation completed!");
@@ -173,36 +184,29 @@ function checkApiKey() {
   }
 
   if (!fs.existsSync(envFilePath)) {
-    const err = new Error(
-      `ERROR: .env file not found. Checked at ${envFilePath}`
+    program.error(
+      `\x1b[31mERROR: .env file not found. Checked at ${envFilePath}\x1b[0m`
     );
-    err.stack = "";
-    throw err;
   }
 
   dotenv.config({ path: envFilePath });
 
   if (!process.env.HEYT_API_KEY) {
-    const err = new Error(
-      `ERROR: HeyTranslate Api Key not found. Checked at ${envFilePath}, the Api Key name has to be "HEYT_API_KEY"`
+    program.error(
+      `\x1b[31mERROR: HeyTranslate Api Key not found. Checked at ${envFilePath}, the Api Key name has to be "HEYT_API_KEY"\x1b[0m`
     );
-    err.stack = "";
-    throw err;
   }
 
-  // TODO: Check if Api Key has the rights to process the translations if not throw error, if yes say that
-  console.log("🔄 Api key verified...");
+  console.log("🔄 Api key exist...");
 }
 
 function getMainFile(t: Translation) {
   const translationFilePath = path.join(baseDirectory, t.mainFilePath);
 
   if (!fs.existsSync(translationFilePath)) {
-    const err = new Error(
-      `ERROR: The main translation file does not exist at the following path:${t.mainFilePath} .\nAre you sure you have written the correct path on heytranslate.config.json?`
+    program.error(
+      `\x1b[31mERROR: The main translation file does not exist at the following path:${t.mainFilePath} .\nAre you sure you have written the correct path on heytranslate.config.json?\x1b[0m`
     );
-    err.stack = "";
-    throw err;
   }
 
   const mainFileContent = fs.readFileSync(translationFilePath, "utf-8");
@@ -211,11 +215,9 @@ function getMainFile(t: Translation) {
   try {
     mainTranslationFile = JSON.parse(mainFileContent);
   } catch {
-    const err = new Error(
-      `ERROR: The main translation file at ${t.mainFilePath} is not a valid JSON. Solve the problem and retry.`
+    program.error(
+      `\x1b[31mERROR: The main translation file at ${t.mainFilePath} is not a valid JSON. Solve the problem and retry.\x1b[0m`
     );
-    err.stack = "";
-    throw err;
   }
   return { mainTranslationFile, mainFileContent };
 }
@@ -235,27 +237,21 @@ function getConfigFileContent() {
     const configContent = fs.readFileSync(configFilePath, "utf-8");
     config = JSON.parse(configContent);
   } else {
-    const err = new Error(
-      `ERROR: heytranslate.config.json not found in your base directory.`
+    program.error(
+      `\x1b[31mERROR: heytranslate.config.json not found in your base directory.\x1b[0m`
     );
-    err.stack = "";
-    throw err;
   }
 
-  if (!config.translations) {
-    const err = new Error(
-      `ERROR: There is no "translations" key in heytranslate.config.json`
+  if (!config!.translations) {
+    program.error(
+      `\x1b[31mERROR: There is no "translations" key in heytranslate.config.json\x1b[0m`
     );
-    err.stack = "";
-    throw err;
   }
 
-  if (config.translations.length === 0) {
-    const err = new Error(
-      `ERROR: There is an empty list of translations in heytranslate.config.json`
+  if (config!.translations.length === 0) {
+    program.error(
+      `\x1b[31mERROR: There is an empty list of translations in heytranslate.config.json\x1b[0m`
     );
-    err.stack = "";
-    throw err;
   }
-  return config;
+  return config!;
 }
