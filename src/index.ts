@@ -166,6 +166,13 @@ function buildCache() {
   const cacheFolderPath = getCacheFolderPath();
   config.translations.forEach((t) => {
     const { mainFileContent } = getMainFile(t);
+    const cacheOutputFolderPath = path.join(
+      cacheFolderPath,
+      t.outputFolderPath
+    );
+    if (!fs.existsSync(cacheOutputFolderPath)) {
+      fs.mkdirSync(cacheOutputFolderPath, { recursive: true });
+    }
     const cacheFilePath = path.join(cacheFolderPath, t.mainFilePath);
     fs.writeFileSync(cacheFilePath, mainFileContent);
   });
