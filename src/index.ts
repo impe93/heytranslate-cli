@@ -97,7 +97,7 @@ async function translateFromConfig() {
 
   try {
     translationApiResponse = await axios.post<Record<string, unknown>[]>(
-      "http://localhost:3000/api/translate",
+      "https://heytranslate.dev/api/translate",
       translationsToSend,
       {
         params: {
