@@ -71,7 +71,7 @@ async function translateFromConfig() {
     t.outputFiles.forEach((of) => {
       const outputFilePath = path.join(
         baseDirectory,
-        t.outputFolderPath,
+        t.outputFolderPath ?? '',
         of.outputFileName
       );
 
@@ -125,7 +125,7 @@ async function translateFromConfig() {
     t.outputFiles.forEach((of) => {
       const outputPath = path.join(
         baseDirectory,
-        t.outputFolderPath,
+        t.outputFolderPath ?? '',
         of.outputFileName
       );
 
@@ -168,7 +168,7 @@ function buildCache() {
     const { mainFileContent } = getMainFile(t);
     const cacheOutputFolderPath = path.join(
       cacheFolderPath,
-      t.outputFolderPath
+      path.dirname(t.mainFilePath)
     );
     if (!fs.existsSync(cacheOutputFolderPath)) {
       fs.mkdirSync(cacheOutputFolderPath, { recursive: true });

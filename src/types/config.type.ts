@@ -4,7 +4,7 @@ export type HeyTranslateConfig = {
 
 export type Translation = {
   mainFilePath: string;
-  outputFolderPath: string;
+  outputFolderPath?: string;
   outputFiles: OutputFile[];
 };
 
